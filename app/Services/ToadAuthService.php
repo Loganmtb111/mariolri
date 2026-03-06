@@ -16,6 +16,28 @@ class ToadAuthService
         $this->token = config('services.toad.token');
     }
 
+    public function login(string $email, string $password): ?string
+    {
+        $url = $this->baseUrl . '/api/auth/login';
+
+        try {
+            $response = Http::acceptJson()
+                ->timeout(5)
+                ->post($url, ['email' => $email, 'password' => $password]);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                return $data['token'] ?? $data['accessToken'] ?? null;
+            }
+
+            Log::warning('Login API KO', ['status' => $response->status(), 'body' => $response->body()]);
+            return null;
+        } catch (\Throwable $e) {
+            Log::error('Erreur login API', ['msg' => $e->getMessage()]);
+            return null;
+        }
+    }
+
     public function verify(string $email, string $password): ?array
     {
         $url = $this->baseUrl . '/staffs/verify';

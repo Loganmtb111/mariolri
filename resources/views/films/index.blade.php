@@ -64,10 +64,16 @@
                                                        class="btn btn-sm btn-warning" title="Modifier">
                                                         <i class="bi bi-pencil"></i> Modifier
                                                     </a>
-                                                    <button class="btn btn-sm btn-danger" title="Supprimer"
-                                                            onclick="return confirm('Êtes-vous sûr ?')">
-                                                        <i class="bi bi-trash"></i> Supprimer
-                                                    </button>
+                                                    <form action="{{ route('films.destroy', $film['filmId'] ?? $film['id']) }}"
+                                                          method="POST"
+                                                          style="display: inline;"
+                                                          onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce film ?')">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-sm btn-danger" title="Supprimer">
+                                                            <i class="bi bi-trash"></i> Supprimer
+                                                        </button>
+                                                    </form>
                                                 </div>
                                             </td>
                                         </tr>
@@ -76,12 +82,7 @@
                             </table>
                         </div>
 
-                        <div class="mt-3">
-                            <p class="text-muted">
-                                <i class="bi bi-info-circle"></i> 
-                                Total : <strong>{{ count($films) }}</strong> film(s)
-                            </p>
-                        </div>
+                        
                     @endif
                 </div>
             </div>

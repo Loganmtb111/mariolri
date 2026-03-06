@@ -35,7 +35,9 @@ class ToadFilmService
                 ->get($url);
 
             if ($response->successful()) {
-                return $response->json();
+                $data = $response->json();
+                // Si l'API retourne un objet paginé Spring, extraire le tableau "content"
+                return $data['content'] ?? $data;
             }
 
             Log::warning('Films API KO', ['status' => $response->status(), 'body' => $response->body()]);
@@ -165,6 +167,36 @@ class ToadFilmService
             return false;
         } catch (\Throwable $e) {
             Log::error('Erreur mise à jour film', ['msg' => $e->getMessage()]);
+            return false;
+        }
+    }
+
+    public function deleteFilm(int $id): bool
+    {
+        $url = $this->baseUrl . '/films/' . $id;
+
+        try {
+            $headers = ['Accept' => 'application/json'];
+            $token = $this->getUserToken();
+            if ($token) {
+                $headers['Authorization'] = "Bearer {$token}";
+            }
+
+            Log::info('Suppression film', ['id' => $id]);
+
+            $response = Http::withHeaders($headers)
+                ->timeout(10)
+                ->delete($url);
+
+            if ($response->successful()) {
+                Log::info('Film supprimé avec succès', ['id' => $id]);
+                return true;
+            }
+
+            Log::warning('Échec suppression film', ['status' => $response->status(), 'body' => $response->body()]);
+            return false;
+        } catch (\Throwable $e) {
+            Log::error('Erreur suppression film', ['msg' => $e->getMessage()]);
             return false;
         }
     }

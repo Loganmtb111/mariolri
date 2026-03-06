@@ -100,4 +100,17 @@ class FilmController extends Controller
             ->with('error', 'Une erreur est survenue lors de la création du film.')
             ->withInput();
     }
+
+    public function destroy($id)
+    {
+        $success = $this->filmService->deleteFilm($id);
+
+        if ($success) {
+            return redirect()->route('films.index')
+                ->with('success', 'Le film a été supprimé avec succès.');
+        }
+
+        return redirect()->route('films.index')
+            ->with('error', 'Une erreur est survenue lors de la suppression du film.');
+    }
 }

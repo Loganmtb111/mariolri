@@ -21,6 +21,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/films/{id}', [FilmController::class, 'show'])->name('films.show');
     Route::get('/films/{id}/edit', [FilmController::class, 'edit'])->name('films.edit');
     Route::put('/films/{id}', [FilmController::class, 'update'])->name('films.update');
+    Route::delete('/films/{id}', [FilmController::class, 'destroy'])->name('films.destroy');
 
     // Routes gestion de stocks
     Route::get('/stocks', [StockController::class, 'index'])->name('stocks.index');

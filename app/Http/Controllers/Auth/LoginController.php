@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Auth\ToadUser;
 use App\Http\Controllers\Controller;
+use App\Services\ToadAuthService;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -13,29 +15,19 @@ class LoginController extends Controller
 
     protected $redirectTo = '/home';
 
-    public function __construct()
+    private ToadAuthService $authService;
+
+    public function __construct(ToadAuthService $authService)
     {
+        $this->authService = $authService;
         $this->middleware('guest')->except('logout');
     }
 
-    /**
-     * Get the login username to be used by the controller.
-     *
-     * @return string
-     */
     public function username()
     {
-        return 'email'; // Utilise le champ email pour la connexion
+        return 'email';
     }
 
-    /**
-     * Validate the user login request.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return void
-     *
-     * @throws \Illuminate\Validation\ValidationException
-     */
     protected function validateLogin(Request $request)
     {
         $request->validate([
@@ -44,43 +36,38 @@ class LoginController extends Controller
         ]);
     }
 
-    /**
-     * Attempt to log the user into the application.
-     * DEMO MODE: Accepte n'importe quel mot de passe
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return bool
-     */
     protected function attemptLogin(Request $request)
     {
-        // Récupérer l'utilisateur par email
-        $user = \App\Models\User::where($this->username(), $request->input($this->username()))->first();
+        $email = $request->input($this->username());
+        $password = $request->input('password');
 
-        // Si l'utilisateur existe, le connecter directement sans vérifier le mot de passe
-        if ($user) {
-            $this->guard()->login($user, $request->filled('remember'));
-            return true;
+        // 1. Vérifier les credentials via l'API TOAD et récupérer les données du staff
+        $staffData = $this->authService->verify($email, $password);
+        if (!$staffData) {
+            return false;
         }
 
-        return false;
+        // 2. Obtenir le JWT via /api/auth/login
+        $token = $this->authService->login($email, $password);
+
+        // 3. Stocker en session (utilisé par ToadFilmService, ToadStockService, ToadUserProvider)
+        $firstName = $staffData['firstName'] ?? $staffData['first_name'] ?? '';
+        $lastName  = $staffData['lastName']  ?? $staffData['last_name']  ?? '';
+
+        session(['toad_user' => [
+            'id'         => $staffData['staffId'] ?? $staffData['staff_id'] ?? $email,
+            'email'      => $staffData['email'] ?? $email,
+            'token'      => $token,
+            'first_name' => $firstName,
+            'last_name'  => $lastName,
+            'name'       => trim("$firstName $lastName") ?: $email,
+        ]]);
+
+        // 4. Connecter via ToadUserProvider (sans BDD)
+        $this->guard()->login(new ToadUser(session('toad_user')), $request->filled('remember'));
+        return true;
     }
 
-    /**
-     * Get the needed authorization credentials from the request.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return array
-     */
-    protected function credentials(Request $request)
-    {
-        return $request->only($this->username(), 'password');
-    }
-
-    /**
-     * Get the guard to be used during authentication.
-     *
-     * @return \Illuminate\Contracts\Auth\StatefulGuard
-     */
     protected function guard()
     {
         return Auth::guard();

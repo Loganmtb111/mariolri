@@ -56,8 +56,11 @@ class FilmController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'releaseYear' => 'nullable|integer|min:1800|max:' . (date('Y') + 5),
+            'rentalDuration' => 'nullable|integer|min:1',
+            'rentalRate' => 'nullable|numeric|min:0',
             'length' => 'nullable|integer|min:1',
-            'rating' => 'nullable|string',
+            'replacementCost' => 'nullable|numeric|min:0',
+            'rating' => 'nullable|in:G,PG,PG-13,R,NC-17',
             'specialFeatures' => 'nullable|string',
         ]);
 

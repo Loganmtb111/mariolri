@@ -11,7 +11,121 @@ class ToadStockService
 
     public function __construct()
     {
-        $this->baseUrl = rtrim((string) config('services.toad.url', 'http://localhost:8180'), '/');
+        $sessionUrl = session('toad_server_url');
+        $this->baseUrl = rtrim(
+            $sessionUrl ?: (string) config('services.toad.url', 'http://localhost:8180'),
+            '/'
+        );
+    }
+
+    public function getAllInventories(): ?array
+    {
+        $url = $this->baseUrl . '/inventories';
+        try {
+            $headers = ['Accept' => 'application/json'];
+            $token = $this->getUserToken();
+            if ($token) {
+                $headers['Authorization'] = "Bearer {$token}";
+            }
+            $response = Http::withHeaders($headers)->timeout(10)->get($url);
+            if ($response->successful()) {
+                $data = $response->json();
+                return $data['content'] ?? $data;
+            }
+            Log::warning('Inventories API KO', ['status' => $response->status(), 'body' => $response->body()]);
+            return null;
+        } catch (\Throwable $e) {
+            Log::error('Erreur API Inventories', ['msg' => $e->getMessage()]);
+            return null;
+        }
+    }
+
+    public function getInventoryById(int $id): ?array
+    {
+        $url = $this->baseUrl . '/inventories/' . $id;
+        try {
+            $headers = ['Accept' => 'application/json'];
+            $token = $this->getUserToken();
+            if ($token) {
+                $headers['Authorization'] = "Bearer {$token}";
+            }
+            $response = Http::withHeaders($headers)->timeout(10)->get($url);
+            return $response->successful() ? $response->json() : null;
+        } catch (\Throwable $e) {
+            Log::error('Erreur API Inventory', ['msg' => $e->getMessage()]);
+            return null;
+        }
+    }
+
+    public function createInventory(array $data): bool
+    {
+        $url = $this->baseUrl . '/inventories';
+        try {
+            $headers = ['Accept' => 'application/json'];
+            $token = $this->getUserToken();
+            if ($token) {
+                $headers['Authorization'] = "Bearer {$token}";
+            }
+            $apiData = [
+                'filmId'  => (int) $data['filmId'],
+                'storeId' => (int) $data['storeId'],
+            ];
+            $response = Http::withHeaders($headers)->timeout(10)->post($url, $apiData);
+            if ($response->successful()) {
+                return true;
+            }
+            Log::warning('Échec création inventaire', ['status' => $response->status(), 'body' => $response->body()]);
+            return false;
+        } catch (\Throwable $e) {
+            Log::error('Erreur création inventaire', ['msg' => $e->getMessage()]);
+            return false;
+        }
+    }
+
+    public function updateInventory(int $id, array $data): bool
+    {
+        $url = $this->baseUrl . '/inventories/' . $id;
+        try {
+            $headers = ['Accept' => 'application/json'];
+            $token = $this->getUserToken();
+            if ($token) {
+                $headers['Authorization'] = "Bearer {$token}";
+            }
+            $apiData = [
+                'filmId'  => (int) $data['filmId'],
+                'storeId' => (int) $data['storeId'],
+            ];
+            $response = Http::withHeaders($headers)->timeout(10)->put($url, $apiData);
+            if ($response->successful()) {
+                return true;
+            }
+            Log::warning('Échec modification inventaire', ['status' => $response->status(), 'body' => $response->body()]);
+            return false;
+        } catch (\Throwable $e) {
+            Log::error('Erreur modification inventaire', ['msg' => $e->getMessage()]);
+            return false;
+        }
+    }
+
+    public function deleteInventory(int $id): bool
+    {
+        $url = $this->baseUrl . '/inventories/' . $id;
+        try {
+            $headers = ['Accept' => 'application/json'];
+            $token = $this->getUserToken();
+            if ($token) {
+                $headers['Authorization'] = "Bearer {$token}";
+            }
+            $response = Http::withHeaders($headers)->timeout(10)->delete($url);
+            if ($response->successful()) {
+                return true;
+            }
+            Log::warning('Échec suppression inventaire', ['status' => $response->status(), 'body' => $response->body()]);
+            return false;
+        } catch (\Throwable $e) {
+            Log::error('Erreur suppression inventaire', ['msg' => $e->getMessage()]);
+            return false;
+        }
     }
 
     /**

@@ -15,67 +15,104 @@ class StockController extends Controller
         $this->stockService = $stockService;
     }
 
-    /**
-     * Affiche la page de gestion des stocks avec les films et leur disponibilité
-     */
     public function index()
     {
-        $films = $this->stockService->getFilmsWithAvailability();
-
-        // Convertir les tableaux associatifs en objets et mapper les clés camelCase vers snake_case
-        if ($films) {
-            $films = array_map(function($film) {
-                return (object) [
-                    'film_id' => $film['filmId'] ?? null,
-                    'title' => $film['title'] ?? '',
-                    'category' => $film['category'] ?? 'Non catégorisé',
-                    'total_inventories' => $film['totalInventories'] ?? 0,
-                    'available_count' => $film['availableCount'] ?? 0,
-                    'status' => $film['status'] ?? 'unavailable',
-                    'status_label' => $film['statusLabel'] ?? 'Non disponible',
-                    'status_reason' => $film['statusReason'] ?? null,
-                ];
-            }, $films);
-        }
+        $inventories = $this->stockService->getAllInventories();
 
         return view('stocks.index', [
-            'films' => $films ?? []
+            'inventories' => $inventories ?? []
         ]);
     }
 
+    public function create()
+    {
+        return view('stocks.create');
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'filmId'  => 'required|integer|min:1',
+            'storeId' => 'required|in:1,2',
+        ]);
+
+        $success = $this->stockService->createInventory($validated);
+
+        if ($success) {
+            return redirect()->route('stocks.index')
+                ->with('success', 'L\'exemplaire a été créé avec succès.');
+        }
+
+        return back()
+            ->with('error', 'Une erreur est survenue lors de la création de l\'exemplaire.')
+            ->withInput();
+    }
+
+    public function edit($id)
+    {
+        $inventory = $this->stockService->getInventoryById($id);
+
+        if (!$inventory) {
+            abort(404, 'Inventaire non trouvé');
+        }
+
+        return view('stocks.edit', ['inventory' => $inventory]);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'filmId'  => 'required|integer|min:1',
+            'storeId' => 'required|in:1,2',
+        ]);
+
+        $success = $this->stockService->updateInventory($id, $validated);
+
+        if ($success) {
+            return redirect()->route('stocks.index')
+                ->with('success', 'L\'exemplaire a été modifié avec succès.');
+        }
+
+        return back()
+            ->with('error', 'Une erreur est survenue lors de la modification de l\'exemplaire.')
+            ->withInput();
+    }
+
+    public function destroy($id)
+    {
+        $success = $this->stockService->deleteInventory($id);
+
+        if ($success) {
+            return redirect()->route('stocks.index')
+                ->with('success', 'L\'exemplaire a été supprimé avec succès.');
+        }
+
+        return redirect()->route('stocks.index')
+            ->with('error', 'Une erreur est survenue lors de la suppression de l\'exemplaire.');
+    }
+
     /**
-     * Récupère les films disponibles dans un store spécifique
+     * Récupère les films disponibles dans un store spécifique (API interne)
      */
     public function getStoreInventory($storeId)
     {
         $inventory = $this->stockService->getStoreInventory($storeId);
 
         if ($inventory !== null) {
-            // Mapper les clés camelCase vers snake_case pour le JavaScript
-            $mappedInventory = array_map(function($item) {
+            $mappedInventory = array_map(function ($item) {
                 return [
                     'inventory_id' => $item['inventoryId'] ?? null,
-                    'film_id' => $item['filmId'] ?? null,
-                    'store_id' => $item['storeId'] ?? null,
-                    'title' => $item['title'] ?? '',
-                    'description' => $item['description'] ?? '',
-                    'release_year' => $item['releaseYear'] ?? null,
-                    'length' => $item['length'] ?? null,
-                    'category' => $item['category'] ?? null,
-                    'is_rented' => $item['isRented'] ?? 0,
+                    'film_id'      => $item['filmId'] ?? null,
+                    'store_id'     => $item['storeId'] ?? null,
+                    'title'        => $item['title'] ?? '',
+                    'is_rented'    => $item['isRented'] ?? 0,
                 ];
             }, $inventory);
 
-            return response()->json([
-                'success' => true,
-                'data' => $mappedInventory
-            ]);
+            return response()->json(['success' => true, 'data' => $mappedInventory]);
         }
 
-        return response()->json([
-            'success' => false,
-            'message' => 'Erreur lors de la récupération des films'
-        ], 500);
+        return response()->json(['success' => false, 'message' => 'Erreur lors de la récupération'], 500);
     }
 
     /**
@@ -84,22 +121,19 @@ class StockController extends Controller
     public function transferInventory(Request $request)
     {
         $request->validate([
-            'origin_store_id' => 'required|integer',
-            'destination_store_id' => 'required|integer|different:origin_store_id'
+            'origin_store_id'      => 'required|integer',
+            'destination_store_id' => 'required|integer|different:origin_store_id',
         ]);
 
-        $originStoreId = $request->origin_store_id;
-        $destinationStoreId = $request->destination_store_id;
-
-        $result = $this->stockService->transferInventory($originStoreId, $destinationStoreId);
+        $result = $this->stockService->transferInventory(
+            $request->origin_store_id,
+            $request->destination_store_id
+        );
 
         if ($result !== null) {
             return response()->json($result);
         }
 
-        return response()->json([
-            'success' => false,
-            'message' => 'Erreur lors du transfert'
-        ], 500);
+        return response()->json(['success' => false, 'message' => 'Erreur lors du transfert'], 500);
     }
 }

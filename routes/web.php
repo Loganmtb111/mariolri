@@ -23,8 +23,13 @@ Route::middleware('auth')->group(function () {
     Route::put('/films/{id}', [FilmController::class, 'update'])->name('films.update');
     Route::delete('/films/{id}', [FilmController::class, 'destroy'])->name('films.destroy');
 
-    // Routes gestion de stocks
+    // Routes gestion de stocks (inventaire)
     Route::get('/stocks', [StockController::class, 'index'])->name('stocks.index');
+    Route::get('/stocks/create', [StockController::class, 'create'])->name('stocks.create');
+    Route::post('/stocks', [StockController::class, 'store'])->name('stocks.store');
+    Route::get('/stocks/{id}/edit', [StockController::class, 'edit'])->name('stocks.edit');
+    Route::put('/stocks/{id}', [StockController::class, 'update'])->name('stocks.update');
+    Route::delete('/stocks/{id}', [StockController::class, 'destroy'])->name('stocks.destroy');
 
     // API pour récupérer les films d'un store
     Route::get('/api/stores/{storeId}/inventory', [StockController::class, 'getStoreInventory'])

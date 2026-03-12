@@ -16,9 +16,9 @@ class ToadAuthService
         $this->token = config('services.toad.token');
     }
 
-    public function login(string $email, string $password): ?string
+    public function login(string $email, string $password, ?string $baseUrl = null): ?string
     {
-        $url = $this->baseUrl . '/api/auth/login';
+        $url = rtrim($baseUrl ?? $this->baseUrl, '/') . '/api/auth/login';
 
         try {
             $response = Http::acceptJson()
@@ -38,9 +38,9 @@ class ToadAuthService
         }
     }
 
-    public function verify(string $email, string $password): ?array
+    public function verify(string $email, string $password, ?string $baseUrl = null): ?array
     {
-        $url = $this->baseUrl . '/staffs/verify';
+        $url = rtrim($baseUrl ?? $this->baseUrl, '/') . '/staffs/verify';
         $body = [
             'email' => $email,
             'password' => $password

@@ -40,6 +40,27 @@
                         </div>
 
                         <div class="row mb-3">
+                            <label for="server" class="col-md-4 col-form-label text-md-end">{{ __('Serveur') }}</label>
+
+                            <div class="col-md-6">
+                                <select id="server" name="server" class="form-select @error('server') is-invalid @enderror">
+                                    <option value="local" {{ old('server', 'local') === 'local' ? 'selected' : '' }}>
+                                        Serveur Local
+                                    </option>
+                                    <option value="distant" {{ old('server') === 'distant' ? 'selected' : '' }}>
+                                        Serveur Distant
+                                    </option>
+                                </select>
+
+                                @error('server')
+                                    <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
                             <div class="col-md-6 offset-md-4">
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>

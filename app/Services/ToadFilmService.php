@@ -12,7 +12,13 @@ class ToadFilmService
 
     public function __construct()
     {
-        $this->baseUrl = rtrim((string) config('services.toad.url', 'http://localhost:8180'), '/');
+        // Utilise l'URL du serveur choisi à la connexion (stockée en session)
+        // ou la config locale par défaut
+        $sessionUrl = session('toad_server_url');
+        $this->baseUrl = rtrim(
+            $sessionUrl ?: (string) config('services.toad.url', 'http://localhost:8180'),
+            '/'
+        );
     }
 
     public function getAllFilms(): ?array
@@ -140,8 +146,11 @@ class ToadFilmService
                 'title' => $data['title'] ?? null,
                 'description' => $data['description'] ?? null,
                 'releaseYear' => !empty($data['releaseYear']) ? (int) $data['releaseYear'] : null,
-                'languageId' => 1, // Valeur par défaut (Anglais généralement)
+                'languageId' => 1,
+                'rentalDuration' => !empty($data['rentalDuration']) ? (int) $data['rentalDuration'] : 3,
+                'rentalRate' => !empty($data['rentalRate']) ? (float) $data['rentalRate'] : 4.99,
                 'length' => !empty($data['length']) ? (int) $data['length'] : null,
+                'replacementCost' => !empty($data['replacementCost']) ? (float) $data['replacementCost'] : 19.99,
                 'rating' => $data['rating'] ?? null,
                 'specialFeatures' => $data['specialFeatures'] ?? null,
             ];
@@ -214,7 +223,14 @@ class ToadFilmService
             return $userData['token'];
         }
 
-        // Sinon, utiliser le token configuré dans .env
+        // Sinon, utiliser le token du serveur sélectionné (stocké en session au login)
+        $serverToken = session('toad_server_token');
+        if (!empty($serverToken)) {
+            Log::info('Utilisation token serveur de session');
+            return $serverToken;
+        }
+
+        // Fallback : token configuré dans .env
         $configToken = config('services.toad.token');
         if (!empty($configToken)) {
             Log::info('Utilisation token configuré dans .env');

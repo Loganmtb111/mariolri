@@ -33,6 +33,9 @@
                     <form action="{{ route('films.update', $film['filmId'] ?? $film['id']) }}" method="POST">
                         @csrf
                         @method('PUT')
+                        <input type="hidden" name="rentalDuration" value="{{ $film['rentalDuration'] ?? 3 }}">
+                        <input type="hidden" name="rentalRate" value="{{ $film['rentalRate'] ?? 4.99 }}">
+                        <input type="hidden" name="replacementCost" value="{{ $film['replacementCost'] ?? 19.99 }}">
 
                         <div class="row mb-3">
                             <div class="col-md-8">
@@ -47,9 +50,15 @@
                             </div>
                             <div class="col-md-4">
                                 <label for="rating" class="form-label fw-bold">Note</label>
-                                <input type="text" class="form-control @error('rating') is-invalid @enderror"
-                                       id="rating" name="rating"
-                                       value="{{ old('rating', $film['rating'] ?? '') }}">
+                                <select class="form-select @error('rating') is-invalid @enderror"
+                                        id="rating" name="rating">
+                                    @foreach(['G', 'PG', 'PG-13', 'R', 'NC-17'] as $option)
+                                        <option value="{{ $option }}"
+                                            {{ old('rating', $film['rating'] ?? '') === $option ? 'selected' : '' }}>
+                                            {{ $option }}
+                                        </option>
+                                    @endforeach
+                                </select>
                                 @error('rating')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror

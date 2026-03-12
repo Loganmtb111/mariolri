@@ -2,17 +2,6 @@
 
 return [
 
-    /*
-    |--------------------------------------------------------------------------
-    | Third Party Services
-    |--------------------------------------------------------------------------
-    |
-    | This file is for storing the credentials for third party services such
-    | as Mailgun, Postmark, AWS and more. This file provides the de facto
-    | location for this type of information, allowing packages to have
-    | a conventional file to locate the various service credentials.
-    |
-    */
 
     'postmark' => [
         'token' => env('POSTMARK_TOKEN'),
@@ -34,10 +23,15 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
-/** Service pour API Toad */
+    /** Service pour API Toad */
     'toad' => [
-    'url' => env('TOAD_API_URL').':'.env('TOAD_API_PORT'),
-    'token' => env('TOAD_API_TOKEN'),
+        'url'   => env('TOAD_API_URL') . ':' . env('TOAD_API_PORT'),
+        'token' => env('TOAD_API_TOKEN'),
+    ],
+
+    'toad_distant' => [
+        'url'   => env('TOAD_API_URL_DISTANT') . ':' . env('TOAD_API_PORT_DISTANT', '80'),
+        'token' => env('TOAD_API_TOKEN_DISTANT'),
     ],
 
 ];

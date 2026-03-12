@@ -6,13 +6,13 @@
         <div class="col-md-12">
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Gestion des stocks de DVD</h5>
+                    <h5 class="mb-0">Gestion de l'inventaire</h5>
                     <div class="d-flex gap-2">
                         <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#changeStoreModal">
-                            <i class="bi bi-shop"></i> Changer l'emplacement du stock
+                            <i class="bi bi-shop"></i> Transférer un stock
                         </button>
-                        <a href="#" class="btn btn-primary btn-sm">
-                            <i class="bi bi-plus-circle"></i> Ajouter un DVD au stock
+                        <a href="{{ route('stocks.create') }}" class="btn btn-primary btn-sm">
+                            <i class="bi bi-plus-circle"></i> Ajouter un exemplaire
                         </a>
                     </div>
                 </div>
@@ -32,70 +32,57 @@
                         </div>
                     @endif
 
-                    @isset($error)
-                        <div class="alert alert-danger alert-dismissible fade show">
-                            <i class="bi bi-exclamation-circle"></i> {{ $error }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    @endisset
-
-                    <!-- Liste des DVD en stock -->
                     <div class="table-responsive">
                         <table class="table table-striped table-hover">
                             <thead class="table-dark">
                                 <tr>
-                                    <th>Titre du film</th>
-                                    <th>Genre</th>
-                                    <th>Total exemplaires</th>
-                                    <th>Disponibilité</th>
+                                    <th>#</th>
+                                    <th>ID Inventaire</th>
+                                    <th>ID Film</th>
+                                    <th>Store</th>
+                                    <th>Dernière mise à jour</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($films as $film)
+                                @forelse($inventories as $index => $inv)
+                                    @php
+                                        $invId  = $inv['inventoryId'] ?? $inv['inventory_id'] ?? null;
+                                        $filmId = $inv['filmId']      ?? $inv['film_id']      ?? '—';
+                                        $storeId = $inv['storeId']    ?? $inv['store_id']     ?? '—';
+                                        $updated = $inv['lastUpdate'] ?? $inv['last_update']  ?? '—';
+                                    @endphp
                                     <tr>
-                                        <td><strong>{{ $film->title }}</strong></td>
-                                        <td><span class="badge bg-secondary">{{ $film->category }}</span></td>
-                                        <td>{{ $film->total_inventories }}</td>
+                                        <td class="text-muted">{{ $index + 1 }}</td>
+                                        <td><strong>{{ $invId }}</strong></td>
+                                        <td>{{ $filmId }}</td>
                                         <td>
-                                            @if($film->status === 'available')
-                                                <span class="badge bg-success">
-                                                    <i class="bi bi-check-circle"></i> {{ $film->status_label }}
-                                                </span>
-                                            @else
-                                                <span class="badge bg-secondary">
-                                                    <i class="bi bi-x-circle"></i> {{ $film->status_label }}
-                                                </span>
-                                                @if($film->status_reason)
-                                                    <small class="text-muted d-block">{{ $film->status_reason }}</small>
-                                                @endif
-                                            @endif
+                                            <span class="badge bg-info text-dark">
+                                                <i class="bi bi-shop"></i> Store {{ $storeId }}
+                                            </span>
                                         </td>
+                                        <td class="text-muted small">{{ $updated }}</td>
                                         <td>
-                                            <div class="d-flex gap-2">
-                                                <button class="btn btn-sm btn-success" title="Ajouter">
-                                                    <i class="bi bi-plus"></i> Ajouter
-                                                </button>
-                                                <button class="btn btn-sm btn-warning" title="Modifier">
+                                            <div class="d-flex gap-1">
+                                                <a href="{{ route('stocks.edit', $invId) }}" class="btn btn-sm btn-warning" title="Modifier">
                                                     <i class="bi bi-pencil"></i> Modifier
-                                                </button>
-                                                @if($film->status === 'unavailable')
-                                                    <button class="btn btn-sm btn-danger" disabled title="Impossible de supprimer un DVD non disponible">
+                                                </a>
+                                                <form action="{{ route('stocks.destroy', $invId) }}" method="POST"
+                                                      onsubmit="return confirm('Supprimer cet exemplaire ?')">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="btn btn-sm btn-danger" title="Supprimer">
                                                         <i class="bi bi-trash"></i> Supprimer
                                                     </button>
-                                                @else
-                                                    <button class="btn btn-sm btn-danger" title="Supprimer" onclick="return confirm('Êtes-vous sûr de vouloir supprimer ce DVD ?')">
-                                                        <i class="bi bi-trash"></i> Supprimer
-                                                    </button>
-                                                @endif
+                                                </form>
                                             </div>
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="text-center text-muted py-4">
+                                        <td colspan="6" class="text-center text-muted py-4">
                                             <i class="bi bi-inbox" style="font-size: 2rem;"></i>
-                                            <p class="mb-0 mt-2">Aucun film disponible dans le stock</p>
+                                            <p class="mb-0 mt-2">Aucun exemplaire dans l'inventaire</p>
                                         </td>
                                     </tr>
                                 @endforelse
@@ -103,14 +90,8 @@
                         </table>
                     </div>
 
-                    <!-- Légende -->
-                    <div class="mt-4 alert alert-info">
-                        <h6><i class="bi bi-info-circle"></i> Légende :</h6>
-                        <ul class="mb-0">
-                            <li><span class="badge bg-success">Disponible</span> : Le DVD est disponible dans le store</li>
-                            <li><span class="badge bg-secondary">Non disponible</span> : Le DVD est soit loué, soit retiré de la liste pour le client</li>
-                            <li>Le bouton <strong>Supprimer</strong> est désactivé si le DVD est actuellement loué</li>
-                        </ul>
+                    <div class="text-muted small mt-2">
+                        {{ count($inventories) }} exemplaire(s) au total
                     </div>
                 </div>
             </div>
@@ -118,21 +99,17 @@
     </div>
 </div>
 
-<!-- Modal pour changer le store -->
+<!-- Modal transfert de stock -->
 <div class="modal fade" id="changeStoreModal" tabindex="-1" aria-labelledby="changeStoreModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="changeStoreModalLabel">Voulez-vous changer le store ?</h5>
+                <h5 class="modal-title" id="changeStoreModalLabel">Transférer le stock entre stores</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p class="mb-3">Liste des stores</p>
-
-                <!-- Message de succès/erreur -->
                 <div id="transferMessage" class="alert" style="display: none;" role="alert"></div>
 
-                <!-- Store d'origine -->
                 <div class="mb-3">
                     <label for="storeOrigin" class="form-label">Store d'origine</label>
                     <select class="form-select" id="storeOrigin">
@@ -142,7 +119,6 @@
                     </select>
                 </div>
 
-                <!-- Store de destination -->
                 <div class="mb-3">
                     <label for="storeDestination" class="form-label">Store de destination</label>
                     <select class="form-select" id="storeDestination">
@@ -152,25 +128,18 @@
                     </select>
                 </div>
 
-                <!-- Liste des films du store d'origine -->
                 <div id="filmListContainer" style="display: none;">
                     <h6 class="mb-2">DVDs dans le store d'origine</h6>
-                    <div id="filmList" style="max-height: 300px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 0.25rem; padding: 0.5rem;">
-                        <div class="text-center text-muted">
-                            <div class="spinner-border spinner-border-sm" role="status">
-                                <span class="visually-hidden">Chargement...</span>
-                            </div>
-                            <p class="mt-2">Chargement des films...</p>
-                        </div>
-                    </div>
+                    <div id="filmList" style="max-height: 300px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 0.25rem; padding: 0.5rem;"></div>
                 </div>
             </div>
             <div class="modal-footer">
                 <div id="errorMessage" class="text-danger small me-auto" style="display: none;">
                     Les stores d'origine et de destination doivent être différents
                 </div>
-                <button type="button" class="btn btn-success" id="confirmStoreChange">
-                    <i class="bi bi-check-circle"></i> Oui
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-success" id="confirmStoreChange" disabled>
+                    <i class="bi bi-check-circle"></i> Transférer
                 </button>
             </div>
         </div>
@@ -178,7 +147,7 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const storeOrigin = document.getElementById('storeOrigin');
     const storeDestination = document.getElementById('storeDestination');
     const confirmBtn = document.getElementById('confirmStoreChange');
@@ -188,18 +157,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const transferMessage = document.getElementById('transferMessage');
 
     function validateStores() {
-        const originValue = storeOrigin.value;
-        const destinationValue = storeDestination.value;
-
-        // Réinitialiser le message de transfert
+        const o = storeOrigin.value, d = storeDestination.value;
         transferMessage.style.display = 'none';
-        transferMessage.className = 'alert';
-        transferMessage.textContent = '';
-
-        if (originValue && destinationValue && originValue === destinationValue) {
+        if (o && d && o === d) {
             confirmBtn.disabled = true;
             errorMessage.style.display = 'block';
-        } else if (originValue && destinationValue) {
+        } else if (o && d) {
             confirmBtn.disabled = false;
             errorMessage.style.display = 'none';
         } else {
@@ -208,47 +171,22 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function loadStoreInventory(storeId) {
-        // Afficher le conteneur et le loader
-        filmListContainer.style.display = 'block';
-        filmList.innerHTML = `
-            <div class="text-center text-muted">
-                <div class="spinner-border spinner-border-sm" role="status">
-                    <span class="visually-hidden">Chargement...</span>
-                </div>
-                <p class="mt-2">Chargement des films...</p>
-            </div>
-        `;
-
-        // Appeler l'API
-        fetch(`/api/stores/${storeId}/inventory`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success && data.data.length > 0) {
-                    // Afficher la liste des films
-                    filmList.innerHTML = data.data.map(film => `
-                        <div class="border-bottom pb-2 mb-2">
-                            <strong>${film.title}</strong>
-                            ${film.is_rented == 1 ? '<span class="badge bg-danger ms-2">Loué</span>' : ''}
-                            <div class="small text-muted">
-                                ${film.category ? `<span class="badge bg-secondary">${film.category}</span>` : ''}
-                            </div>
-                        </div>
-                    `).join('');
-                } else {
-                    filmList.innerHTML = '<p class="text-muted text-center">Aucun film dans ce store</p>';
-                }
-            })
-            .catch(error => {
-                console.error('Erreur:', error);
-                filmList.innerHTML = '<p class="text-danger text-center">Erreur lors du chargement des films</p>';
-            });
-    }
-
-    storeOrigin.addEventListener('change', function() {
-        const storeId = this.value;
-        if (storeId) {
-            loadStoreInventory(storeId);
+    storeOrigin.addEventListener('change', function () {
+        if (this.value) {
+            filmListContainer.style.display = 'block';
+            filmList.innerHTML = '<div class="text-center text-muted"><div class="spinner-border spinner-border-sm"></div><p class="mt-2">Chargement...</p></div>';
+            fetch(`/api/stores/${this.value}/inventory`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success && data.data.length > 0) {
+                        filmList.innerHTML = data.data.map(f =>
+                            `<div class="border-bottom pb-2 mb-2"><strong>${f.title}</strong> ${f.is_rented == 1 ? '<span class="badge bg-danger ms-2">Loué</span>' : ''}</div>`
+                        ).join('');
+                    } else {
+                        filmList.innerHTML = '<p class="text-muted text-center">Aucun film dans ce store</p>';
+                    }
+                })
+                .catch(() => { filmList.innerHTML = '<p class="text-danger text-center">Erreur de chargement</p>'; });
         } else {
             filmListContainer.style.display = 'none';
         }
@@ -257,97 +195,56 @@ document.addEventListener('DOMContentLoaded', function() {
 
     storeDestination.addEventListener('change', validateStores);
 
-    // Gérer le clic sur le bouton de confirmation
-    confirmBtn.addEventListener('click', function() {
-        const originStoreId = storeOrigin.value;
-        const destinationStoreId = storeDestination.value;
+    confirmBtn.addEventListener('click', function () {
+        const o = storeOrigin.value, d = storeDestination.value;
+        if (!o || !d || o === d) return;
 
-        if (!originStoreId || !destinationStoreId || originStoreId === destinationStoreId) {
-            return;
-        }
-
-        // Désactiver le bouton pendant le traitement
         confirmBtn.disabled = true;
-        confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Transfert en cours...';
+        confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Transfert...';
 
-        // Récupérer le token CSRF
-        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
-        // Envoyer la requête de transfert
         fetch('/api/stores/transfer', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': csrfToken
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
             },
-            body: JSON.stringify({
-                origin_store_id: originStoreId,
-                destination_store_id: destinationStoreId
-            })
+            body: JSON.stringify({ origin_store_id: o, destination_store_id: d })
         })
-        .then(response => response.json())
+        .then(r => r.json())
         .then(data => {
+            transferMessage.className = data.success ? 'alert alert-success' : 'alert alert-danger';
+            transferMessage.innerHTML = (data.success ? '<i class="bi bi-check-circle"></i> ' : '<i class="bi bi-exclamation-circle"></i> ') + (data.message ?? '');
+            transferMessage.style.display = 'block';
             if (data.success) {
-                // Afficher un message de succès en vert
-                transferMessage.className = 'alert alert-success';
-                transferMessage.innerHTML = '<i class="bi bi-check-circle"></i> ' + data.message;
-                transferMessage.style.display = 'block';
-
-                // Désactiver les menus et le bouton
                 storeOrigin.disabled = true;
                 storeDestination.disabled = true;
                 confirmBtn.innerHTML = '<i class="bi bi-check-circle"></i> Transféré !';
-
-                // Recharger la page après 2 secondes
-                setTimeout(function() {
-                    location.reload();
-                }, 2000);
+                setTimeout(() => location.reload(), 2000);
             } else {
-                // Afficher un message d'erreur en rouge
-                transferMessage.className = 'alert alert-danger';
-                transferMessage.innerHTML = '<i class="bi bi-exclamation-circle"></i> Erreur : ' + data.message;
-                transferMessage.style.display = 'block';
-
                 confirmBtn.disabled = false;
-                confirmBtn.innerHTML = '<i class="bi bi-check-circle"></i> Oui';
+                confirmBtn.innerHTML = '<i class="bi bi-check-circle"></i> Transférer';
             }
         })
-        .catch(error => {
-            console.error('Erreur:', error);
-
-            // Afficher un message d'erreur en rouge
+        .catch(() => {
             transferMessage.className = 'alert alert-danger';
-            transferMessage.innerHTML = '<i class="bi bi-exclamation-circle"></i> Une erreur est survenue lors du transfert';
+            transferMessage.innerHTML = '<i class="bi bi-exclamation-circle"></i> Erreur lors du transfert';
             transferMessage.style.display = 'block';
-
             confirmBtn.disabled = false;
-            confirmBtn.innerHTML = '<i class="bi bi-check-circle"></i> Oui';
+            confirmBtn.innerHTML = '<i class="bi bi-check-circle"></i> Transférer';
         });
     });
 
-    confirmBtn.disabled = true;
-
-    // Réinitialiser la modal quand elle est ouverte
-    const modal = document.getElementById('changeStoreModal');
-    modal.addEventListener('show.bs.modal', function() {
-        // Réinitialiser les champs
+    document.getElementById('changeStoreModal').addEventListener('show.bs.modal', function () {
         storeOrigin.value = '';
         storeDestination.value = '';
         storeOrigin.disabled = false;
         storeDestination.disabled = false;
         filmListContainer.style.display = 'none';
-
-        // Réinitialiser les messages
         transferMessage.style.display = 'none';
-        transferMessage.className = 'alert';
-        transferMessage.textContent = '';
         errorMessage.style.display = 'none';
-
-        // Réinitialiser le bouton
         confirmBtn.disabled = true;
-        confirmBtn.innerHTML = '<i class="bi bi-check-circle"></i> Oui';
+        confirmBtn.innerHTML = '<i class="bi bi-check-circle"></i> Transférer';
     });
 });
 </script>
-
 @endsection

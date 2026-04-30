@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\FilmController;
 use App\Http\Controllers\StockController;
+use App\Http\Controllers\RentalController;
+use App\Http\Controllers\CustomerController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -30,6 +32,16 @@ Route::middleware('auth')->group(function () {
     Route::get('/stocks/{id}/edit', [StockController::class, 'edit'])->name('stocks.edit');
     Route::put('/stocks/{id}', [StockController::class, 'update'])->name('stocks.update');
     Route::delete('/stocks/{id}', [StockController::class, 'destroy'])->name('stocks.destroy');
+
+    // Routes réservations
+    Route::get('/rentals', [RentalController::class, 'index'])->name('rentals.index');
+    Route::put('/rentals/{id}', [RentalController::class, 'update'])->name('rentals.update');
+
+    // Routes clients
+    Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
+    Route::get('/customers/{id}/edit', [CustomerController::class, 'edit'])->name('customers.edit');
+    Route::put('/customers/{id}', [CustomerController::class, 'update'])->name('customers.update');
+    Route::delete('/customers/{id}', [CustomerController::class, 'destroy'])->name('customers.destroy');
 
     // API pour récupérer les films d'un store
     Route::get('/api/stores/{storeId}/inventory', [StockController::class, 'getStoreInventory'])

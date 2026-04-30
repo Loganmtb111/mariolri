@@ -2,27 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+use App\Services\ToadFilmService;
+use App\Services\ToadCustomerService;
+use App\Services\ToadRentalService;
 
 class HomeController extends Controller
 {
-    /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
     public function __construct()
     {
         $this->middleware('auth');
     }
 
-    /**
-     * Show the application dashboard.
-     *
-     * @return \Illuminate\Contracts\Support\Renderable
-     */
     public function index()
     {
-        return view('home');
+        $filmCount     = app(ToadFilmService::class)->getFilmCount();
+        $customerCount = app(ToadCustomerService::class)->getCustomerCount();
+        $rentalCount   = app(ToadRentalService::class)->getRentalCount();
+
+        return view('home', compact('filmCount', 'customerCount', 'rentalCount'));
     }
 }

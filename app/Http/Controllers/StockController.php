@@ -3,30 +3,38 @@
 namespace App\Http\Controllers;
 
 use App\Services\ToadStockService;
+use App\Services\ToadFilmService;
 use Illuminate\Http\Request;
 
 class StockController extends Controller
 {
     private ToadStockService $stockService;
+    private ToadFilmService $filmService;
 
-    public function __construct(ToadStockService $stockService)
+    public function __construct(ToadStockService $stockService, ToadFilmService $filmService)
     {
         $this->middleware('auth');
         $this->stockService = $stockService;
+        $this->filmService  = $filmService;
     }
 
     public function index()
     {
-        $inventories = $this->stockService->getAllInventories();
+        $inventories = $this->stockService->getAllInventories() ?? [];
 
-        return view('stocks.index', [
-            'inventories' => $inventories ?? []
-        ]);
+        usort($inventories, function ($a, $b) {
+            $idA = $a['film']['filmId'] ?? $a['filmId'] ?? $a['film_id'] ?? 0;
+            $idB = $b['film']['filmId'] ?? $b['filmId'] ?? $b['film_id'] ?? 0;
+            return $idA <=> $idB;
+        });
+
+        return view('stocks.index', ['inventories' => $inventories]);
     }
 
     public function create()
     {
-        return view('stocks.create');
+        $films = $this->filmService->getAllFilms() ?? [];
+        return view('stocks.create', ['films' => $films]);
     }
 
     public function store(Request $request)

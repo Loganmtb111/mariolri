@@ -37,13 +37,36 @@
                             <input type="number" class="form-control @error('filmId') is-invalid @enderror"
                                    id="filmId" name="filmId"
                                    value="{{ old('filmId') }}"
-                                   min="1" required
-                                   placeholder="Ex: 1">
+                                   min="1" required placeholder="Ex: 2">
                             @error('filmId')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
-                            <div class="form-text">Saisissez l'ID du film à ajouter à l'inventaire.</div>
+                            <div id="filmPreview" class="form-text mt-1"></div>
                         </div>
+
+                        @php
+                            $filmMap = [];
+                            foreach ($films as $f) {
+                                $fid = $f['filmId'] ?? $f['film_id'] ?? null;
+                                if ($fid !== null) $filmMap[$fid] = $f['title'] ?? '—';
+                            }
+                        @endphp
+                        <script>
+                            const filmMap = @json($filmMap);
+                            document.getElementById('filmId').addEventListener('input', function () {
+                                const preview = document.getElementById('filmPreview');
+                                const title = filmMap[this.value];
+                                if (title) {
+                                    preview.innerHTML = '🎬 Vous allez ajouter le film : <strong>' + title + '</strong>';
+                                    preview.className = 'form-text text-success mt-1';
+                                } else if (this.value) {
+                                    preview.innerHTML = 'Aucun film trouvé pour cet ID.';
+                                    preview.className = 'form-text text-danger mt-1';
+                                } else {
+                                    preview.innerHTML = '';
+                                }
+                            });
+                        </script>
 
                         <div class="mb-3">
                             <label for="storeId" class="form-label fw-bold">Store <span class="text-danger">*</span></label>

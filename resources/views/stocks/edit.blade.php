@@ -39,15 +39,13 @@
                         @csrf
                         @method('PUT')
 
+                        <input type="hidden" name="filmId" value="{{ $filmId }}">
+
                         <div class="mb-3">
-                            <label for="filmId" class="form-label fw-bold">ID du film <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control @error('filmId') is-invalid @enderror"
-                                   id="filmId" name="filmId"
-                                   value="{{ old('filmId', $filmId) }}"
-                                   min="1" required>
-                            @error('filmId')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                            <label class="form-label fw-bold">Film</label>
+                            <p class="form-control-plaintext">
+                                {{ $inventory['film']['title'] ?? '—' }} <span class="text-muted">(ID : {{ $filmId }})</span>
+                            </p>
                         </div>
 
                         <div class="mb-3">

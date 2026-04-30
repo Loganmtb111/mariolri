@@ -8,9 +8,6 @@
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Gestion de l'inventaire</h5>
                     <div class="d-flex gap-2">
-                        <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal" data-bs-target="#changeStoreModal">
-                            <i class="bi bi-shop"></i> Transférer un stock
-                        </button>
                         <a href="{{ route('stocks.create') }}" class="btn btn-primary btn-sm">
                             <i class="bi bi-plus-circle"></i> Ajouter un exemplaire
                         </a>
@@ -39,29 +36,29 @@
                                     <th>#</th>
                                     <th>ID Inventaire</th>
                                     <th>ID Film</th>
+                                    <th>Nom du film</th>
                                     <th>Store</th>
-                                    <th>Dernière mise à jour</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse($inventories as $index => $inv)
                                     @php
-                                        $invId  = $inv['inventoryId'] ?? $inv['inventory_id'] ?? null;
-                                        $filmId = $inv['filmId']      ?? $inv['film_id']      ?? '—';
-                                        $storeId = $inv['storeId']    ?? $inv['store_id']     ?? '—';
-                                        $updated = $inv['lastUpdate'] ?? $inv['last_update']  ?? '—';
+                                        $invId   = $inv['inventoryId'] ?? $inv['inventory_id'] ?? null;
+                                        $filmId  = $inv['film']['filmId'] ?? $inv['filmId'] ?? $inv['film_id'] ?? '—';
+                                        $title   = $inv['film']['title'] ?? '—';
+                                        $storeId = $inv['storeId'] ?? $inv['store_id'] ?? '—';
                                     @endphp
                                     <tr>
                                         <td class="text-muted">{{ $index + 1 }}</td>
                                         <td><strong>{{ $invId }}</strong></td>
                                         <td>{{ $filmId }}</td>
+                                        <td>{{ $title }}</td>
                                         <td>
                                             <span class="badge bg-info text-dark">
                                                 <i class="bi bi-shop"></i> Store {{ $storeId }}
                                             </span>
                                         </td>
-                                        <td class="text-muted small">{{ $updated }}</td>
                                         <td>
                                             <div class="d-flex gap-1">
                                                 <a href="{{ route('stocks.edit', $invId) }}" class="btn btn-sm btn-warning" title="Modifier">

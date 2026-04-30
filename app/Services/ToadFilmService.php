@@ -54,6 +54,31 @@ class ToadFilmService
         }
     }
 
+    public function getFilmCount(): ?int
+    {
+        $url = $this->baseUrl . '/films';
+
+        try {
+            $headers = ['Accept' => 'application/json'];
+            $token = $this->getUserToken();
+            if ($token) {
+                $headers['Authorization'] = "Bearer {$token}";
+            }
+
+            $response = Http::withHeaders($headers)->timeout(10)->get($url);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                return $data['totalElements'] ?? count($data['content'] ?? $data);
+            }
+
+            return null;
+        } catch (\Throwable $e) {
+            Log::error('Erreur getFilmCount', ['msg' => $e->getMessage()]);
+            return null;
+        }
+    }
+
     public function getFilmById(int $id): ?array
     {
         $url = $this->baseUrl . '/films/' . $id;
@@ -177,6 +202,32 @@ class ToadFilmService
         } catch (\Throwable $e) {
             Log::error('Erreur mise à jour film', ['msg' => $e->getMessage()]);
             return false;
+        }
+    }
+
+    public function getFilmsWithRentalCount(): ?array
+    {
+        $url = $this->baseUrl . '/films/rental-count';
+
+        try {
+            $headers = ['Accept' => 'application/json'];
+            $token = $this->getUserToken();
+            if ($token) {
+                $headers['Authorization'] = "Bearer {$token}";
+            }
+
+            $response = Http::withHeaders($headers)->timeout(10)->get($url);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                return $data['content'] ?? $data;
+            }
+
+            Log::warning('Films rental-count API KO', ['status' => $response->status()]);
+            return null;
+        } catch (\Throwable $e) {
+            Log::error('Erreur getFilmsWithRentalCount', ['msg' => $e->getMessage()]);
+            return null;
         }
     }
 
